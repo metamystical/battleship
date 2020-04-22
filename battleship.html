@@ -1,0 +1,108 @@
+<!doctype html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>Battleship</title>
+  <style>
+  .grid {
+    position: relative;
+    border: 2px solid black;
+    width: 500px;
+    height: 500px;
+  }
+  .grid div {
+    position: absolute;
+    box-sizing: border-box;
+    background: #f6f8f9;
+    border: 1px solid #ddd;
+    width: 50px;
+    height: 50px;
+  }
+  td {
+    padding: 10px;
+  }
+  </style>
+  <script>
+  const server = 'ws://localhost:3333'
+  function go () {
+    let ws
+    let conReady = false
+    let gameReady = false
+
+    const grid = [ getEle("theirGrid"), getEle("myGrid") ]
+    for (let g = 0; g < grid.length; g++) {
+      for (let x = 0; x < 10; x++) {
+        for (let y = 0; y < 10; y++) {
+          const square = document.createElement("div")
+          grid[g].appendChild(square)
+          square.id = 's' + g + x + y
+          square.style.top = (x * 50) + 'px';
+          square.style.left = (y * 50) + 'px';						
+        }
+      }
+    }
+    grid[0].addEventListener("click", function (e) {
+      if (!gameReady) return
+      if (e.target !== e.currentTarget) {
+        const x = e.target.id.substring(2,3)
+        const y = e.target.id.substring(3,4)
+        send({ type: 'click', x: x, y: y })
+      }
+      e.stopPropagation()
+    }, false)
+
+    if ("WebSocket" in window) {
+      ws = new WebSocket(server)
+      ws.onopen = function () {
+        conReady = true
+        send({ type: 'init' })
+      }
+      ws.onmessage = function (e) { 
+        const data = JSON.parse(e.data)
+        switch (data.type) {
+          case 'ready': gameReady = true; break
+          case 'theirMiss': setBackground('s0' + data.x + data.y, '#bbb'); play('splash'); break
+          case 'theirHit': setBackground('s0' + data.x + data.y, 'red'); play('bomb'); break
+          case 'theirWin': setText('msg', "All enemy battleships have been sunk! You win!"); break
+          case 'theirWaste': alert("Stop wasting your torpedos! You already fired at this location."); break
+          case 'myShip': setBackground('s1' + data.x + data.y, 'blue'); break
+          case 'myHit': setBackground('s1' + data.x + data.y, 'red'); play('bomb'); break
+          case 'myMiss': setBackground('s1' + data.x + data.y, '#bbb'); play('splash'); break
+          case 'myWin': setText('msg', "All your battleships have been sunk! You lose!"); break
+        }
+      }
+      ws.onclose = function () {
+        conReady = false 
+        alert("Connection is closed.")
+      }
+    } else alert("WebSocket NOT supported by your Browser!")
+
+    function send (data) { if (conReady) ws.send(JSON.stringify(data)) }
+  }
+  function setText (id, text) { document.getElementById(id).textContent = text }
+  function setBackground (id, color) { document.getElementById(id).style.background = color }
+  function getEle (id) { return document.getElementById(id) }
+  function play (id) { document.getElementById(id).play() }
+  </script>
+</head>
+<body onload="go()">
+	<table>
+    <tr>
+      <th>Their grid</th><th>My grid</th>
+    </tr><tr>
+      <td><div class="grid" id="theirGrid"></div></td>
+      <td><div class="grid" id="myGrid"></div></td>
+      <td><table>
+    <tr><td>Aircraft carrier (5)</td></tr>
+    <tr><td>Battleship (4)</td></tr>
+    <tr><td>Destroyer (3)</td></tr>
+    <tr><td>Submarine (3)</td></tr>
+    <tr><td>Patrol boat (2)</td></tr>
+    </table></td>
+    </tr>
+  </table>
+  <h3><span id="msg"></span></h3>
+  <audio id="bomb" src="bomb.mp3"></audio>
+  <audio id="splash" src="splash.mp3"></audio>
+</body>
+</html>
