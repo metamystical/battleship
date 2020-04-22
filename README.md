@@ -1,5 +1,5 @@
 # battleship
-Simple battleship game using node.js
+Simple battleship game using node.js and websockets
 
 ## Installation
 
