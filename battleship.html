@@ -61,14 +61,16 @@
         const data = JSON.parse(e.data)
         switch (data.type) {
           case 'ready': gameReady = true; break
-          case 'theirMiss': setBackground('s0' + data.x + data.y, '#bbb'); play('splash'); break
-          case 'theirHit': setBackground('s0' + data.x + data.y, 'red'); play('bomb'); break
-          case 'theirWin': setText('msg', "All enemy battleships have been sunk! You win!"); break
-          case 'theirWaste': alert("Stop wasting your torpedos! You already fired at this location."); break
-          case 'myShip': setBackground('s1' + data.x + data.y, 'blue'); break
-          case 'myHit': setBackground('s1' + data.x + data.y, 'red'); play('bomb'); break
-          case 'myMiss': setBackground('s1' + data.x + data.y, '#bbb'); play('splash'); break
-          case 'myWin': setText('msg', "All your battleships have been sunk! You lose!"); break
+          case 'miss': setBackground('s' + data.s + data.x + data.y, '#bbb'); play('splash'); break
+          case 'hit': setBackground('s' + data.s + data.x + data.y, 'red'); play('bomb'); break
+          case 'waste': alert("Stop wasting your torpedos! You already fired at this location."); break
+          case 'theirWin': setText('msg', "All your battleships have been sunk! You lose!"); break
+          case 'myWin': setText('msg', "All enemy battleships have been sunk! You win!"); break
+          case 'grid': switch(data.z) {
+                        case 1: setBackground('s' + data.s + data.x + data.y, 'blue'); break
+                        case 2: setBackground('s' + data.s + data.x + data.y, 'red'); break
+                        case 3: setBackground('s' + data.s + data.x + data.y, '#bbb'); break
+                      }; break
         }
       }
       ws.onclose = function () {
